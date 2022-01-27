@@ -17,8 +17,8 @@ contract P2PLoan is Pausable{
   // NFT loan post struct
   struct Loan {
     uint loanID;
-    address payable lender;
-    address payable borrower;
+    address payable lender; // owner of capital
+    address payable borrower; // owner of token
     uint NFTtokenID;
     address NFTtokenAddress;
     uint loanAmount;  // principal/capital of loan
@@ -45,18 +45,16 @@ contract P2PLoan is Pausable{
     address tokenAddress,
     uint loanAmount,
     uint interestRate,
-    uint loanCompleteTimeStamp
+    uint loanCompleteTimeStamp,
+    uint blockTimeStamp
   );
-  // New loan lender/bidder
-  event LoanUnderwritten(uint256 id, address lender);
+
   // Loan drawn by NFT owner
-  event LoanDrawn(uint256 id);
+  event LoanDrawn(uint id);
   // Loan repayed by address
-  event LoanRepayed(uint256 id, address lender, address repayer);
-  // Loan cancelled by NFT owner
-  event LoanCancelled(uint256 id);
+  event LoanRepayed(uint id, address lender, address repayer);
   // NFT seized by lender
-  event LoanSeized(uint256 id, address lender, address caller);
+  event LoanDefault(uint id, address lender, address caller);
 
   // ============ Modifiers ============
 
@@ -84,13 +82,6 @@ contract P2PLoan is Pausable{
         numOfLoans = 0;
   }
 
-  function pauseLoans() public onlyCreator {
-      _pause();
-  }
-
-  function unPauseLoans() public onlyCreator {
-      _unpause();
-  }
 
   /**
     creates a new loan object 
@@ -101,8 +92,8 @@ contract P2PLoan is Pausable{
     uint _loanAmount,
     uint _interestRate,
     uint _loanCompleteTimeStamp
-  ) external whenNotPaused {
-    
+  ) external whenNotPaused returns(uint _numOfLoans) {
+ 
     require(_interestRate < 100, "Interest must be lower than 100%.");
     require(_loanCompleteTimeStamp > block.timestamp, "Can't create loan in past");
     require(_loanCompleteTimeStamp - block.timestamp < 365 days, "Max loan period is 12 months");
@@ -129,24 +120,18 @@ contract P2PLoan is Pausable{
       _tokenAddress,
       _loanAmount,
       _interestRate,
-      _loanCompleteTimeStamp
+      _loanCompleteTimeStamp,
+      block.timestamp
     );
-  }
 
-  /**
-    Executes a loan and pays chosen bidder
-   */
-  function underwriteLoan(uint _loanID) external payable 
-    isValidLoanID(_loanID) whenNotPaused{
-
-    emit LoanUnderwritten(_loanID, msg.sender);
+    return numOfLoans;
   }
 
 
   /**
     Enables NFT owner to draw capital from top bid
    */
-  function drawLoan(uint _loanID) external isValidLoanID(_loanID) whenNotPaused{
+  function drawLoan(uint _loanID) external isValidLoanID(_loanID){
 
     // Emit draw event
     emit LoanDrawn(_loanID);
@@ -167,7 +152,7 @@ contract P2PLoan is Pausable{
    Helper function to calculate total amount from interest rate
    */
   function calculateRequiredRepayment(uint _loanID)
-      public view returns (uint) {
+      public pure returns (uint) {
     
     // can calculate from backtracking from 
     uint totalAmount = _loanID + 10;
@@ -182,14 +167,23 @@ contract P2PLoan is Pausable{
     
 
     // Emit seize event
-    emit LoanSeized(_loanID, creator, msg.sender);
+    emit LoanDefault(_loanID, creator, msg.sender);
   }
   
-  /** 
-    allows lender to cancel loan post
+  // uncomment if you're working on this. this is just to silence warnings
+
+   /**
+    gets loan listings
    */
-  function cancelLoan(uint256 _loanID) external {
-    
-    emit LoanCancelled(_loanID);
-  }
+   function getLoan(uint _loanID) external view returns(Loan memory loan) {
+     return allLoans[_loanID];
+   }
+
+  //  /**
+  //   gets all loan listings
+  //  */
+  //  function getAllLoans() external view returns(int) {
+  //    return 0;
+  //  }
+
 }
