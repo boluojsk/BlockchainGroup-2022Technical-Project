@@ -182,8 +182,10 @@ contract P2PLoan is Pausable{
   //  /**
   //   gets all loan listings
   //  */
-  //  function getAllLoans() external view returns(int) {
+  //function getAllLoans() external view returns(int) {
   //    return 0;
   //  }
+
+  /// Return all the loans for one persons loans
 
 }

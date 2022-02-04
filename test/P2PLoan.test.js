@@ -4,8 +4,8 @@ const { assert } = require('chai');
 const P2PLoan = artifacts.require('./P2PLoan.sol')
 
 // change this according to your own ganache
-const acc1 = 0xAd4f27e8c72eA67506dfE4F5b9956019654867Ae;
-const acc2 = 0xAb93808f7BF3c8dABEbDC5b743900c2373271F6f;
+const acc1 = 0xfB8B60e56Fd8C49640e795DB9622F3845f492d80;
+const acc2 = 0x8329Ea99843B1Be0396ffb788b254a57752f9DBa;
 
 
 require('chai')
@@ -45,6 +45,8 @@ contract('P2PLoan', (accounts) => {
       assert.equal(loan.NFTtokenAddress, accounts[1], "token address incorrect")
       assert.equal(loan.status, 0, "status incorrect")
     })
+
+    
   })
 /*
   describe('new function', () => {
