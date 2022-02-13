@@ -20,20 +20,9 @@ contract BlindAuction {
         // minimum acceptable loan amount
         uint min_loan_amount;
 
-        // list of all the bids that have been made so far -> enables us to loop through the availableBids array
-        uint numOfBids;
+        // list of all the bids that have been made so far 
         Bid[] availableBids;
         // list of addresses that are allowed to withdraw ether sent when making bid(i.e the bidders who did not win the auction)
-
-        // store addresses in eligibleWithdrawals array then store corresponding amount in exactReturns array
-        // so to check if someone is allowed to withdraw, check whether their address is in eligibleWithdrawals and then use the
-        // the index of that address to get the exactReturn
-        // so like if eligibleWithdrawals =[0x345,0x456]
-        // to get exact returns for //0x456 -> loop through array to get 0x456 is at index 1 then exactReturns[1] would
-        // give the exactReturn 0x456 should get
-        uint numOfEligibleWithdrawals;
-        address[] eligibleWithdrawals;
-        uint[] exactReturns;
 
         // the Auction window 
         uint auctionEndTime;
@@ -51,12 +40,16 @@ contract BlindAuction {
         bool auctionCanceled;
         }
 
-    // mapping of NFT_addres to auction_objects
+    // mapping of NFT_address to auction_objects
     mapping(address=>Auction_Object) public Auction_Objects;
+
+
+    //maps NFT address to specific bidder address to the withdrawal amount they're supposed to get
+    mapping(address=>mapping(address=>uint)) public eligibleWithdrawals;
 
     // auctionObjects Array;
     Auction_Object[] Auction_Objects_array;
-    // mapping of NFT_addess to boolean. Necessary for checking whether the NFT is already staked
+    // mapping of NFT_address to boolean. Necessary for checking whether the NFT is already staked
     mapping(address=>bool) NFT_staked_bool;
     uint NFT_addresses_count = 0;
     address[] NFT_addresses_arr;
@@ -73,8 +66,6 @@ contract BlindAuction {
         auctionObj.beneficiary = payable(msg.sender);
         auctionObj.min_loan_amount = min_loan_amount;
         auctionObj.NFT_address = NFT_address;
-        auctionObj.numOfBids = 0;
-        auctionObj.numOfEligibleWithdrawals = 0;
         auctionObj.auctionEndTime = auction_start_time + auction_duration;
         auctionObj.bidSelected = false;
         auctionObj.auctionCanceled  = false;
@@ -99,9 +90,7 @@ contract BlindAuction {
         auctionObj.availableBids.push(
             Bid(loan_amt, int_rate, repayment_period, msg.sender)
             );
-        auctionObj.numOfBids += 1;
-        auctionObj.numOfEligibleWithdrawals += 1;
-        auctionObj.eligibleWithdrawals.push(msg.sender);
+        eligibleWithdrawals[NFT_address][msg.sender] += msg.value;
         return true;
     }
 
@@ -114,7 +103,7 @@ contract BlindAuction {
     function cancelAuction(address NFT_address) public{
     }
 
-    function withdraw(address NFT_address) public returns (bool){
+    function withdraw(address NFT_address) public{
     }
 
     // get a single Auction Object for one NFT address
