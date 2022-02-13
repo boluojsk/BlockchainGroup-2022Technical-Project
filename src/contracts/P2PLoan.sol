@@ -140,10 +140,19 @@ contract P2PLoan is Pausable{
   /**
     Enables lender to reclaim NFt by paying borrower
    */
-    function repayLoan(uint _loanID) external payable isValidLoanID(_loanID){
+  function repayLoan(uint _loanID) external payable isValidLoanID(_loanID){
+    Loan storage l = allLoans[_loanID];
+    address payable lender = l.lender;
+    //address borrower = l.borrower;
 
-      // transfer nft back to owner
-
+    //transfer money to borrower
+    require(msg.value == calculateRequiredRepayment(_loanID));
+    address(lender).transfer(msg.value);
+    //set loan to paid
+    l.status = Status.ENDED;
+    //
+    // transfer nft back to owner
+    //*transfer NFT function here*
     // Emit repayment event 
     emit LoanRepayed(_loanID, creator, msg.sender);
   }

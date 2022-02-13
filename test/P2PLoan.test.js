@@ -29,7 +29,7 @@ contract('P2PLoan', (accounts) => {
   describe('create loan', () => {
     it('should increase numOfLoans', async () => {
       await contract.createLoan.sendTransaction(
-        accounts[1], 0, 100, 2, Math.round(Date.now() / 1000) + 100, // normalize to seconds then add 100 seconds 
+        accounts[1], 0, 100, 2, Math.round(Date.now() / 1000) + 100, // normalize to seconds then add 100 seconds
         { from: accounts[0] }
       );
       const n = await contract.numOfLoans.call();
@@ -46,6 +46,26 @@ contract('P2PLoan', (accounts) => {
       assert.equal(loan.status, 0, "status incorrect")
     })
   })
+
+
+  describe('repay loan', () => {
+    it('should transfer money to other acct and return NFT', async () => {
+      //using example loan from create loan as I'm still getting the hang of this
+      console.log(Math.round(Date.now() / 1000));
+      const loan = await contract.createLoan.sendTransaction(accounts[1], 0, 100, 2, Math.round(Date.now() / 1000) + 100,
+          {from: accounts[0]});
+      const og_balance_lender = accounts[1].balance;
+      const og_balance_borrower = accounts[0].balance;
+      await contract.repayLoan.sendTransaction(loan, {from: accounts[1]});
+      assert.equal(loan.status, 3, "Status incorrect")
+      assert.equal(loan.NFTtokenAddress, accounts[0], "NFT not returned")
+      assert.equal(accounts[1].balance, og_balance_lender + loan.loanAmount, "lender balance incorrect")
+      assert.equal(accounts[0].balance, og_balance_borrower - loan.loanAmount, "borrower balance incorrect")
+    })
+  })
+
+
+  
 /*
   describe('new function', () => {
     it('should behave like this', async () => {
