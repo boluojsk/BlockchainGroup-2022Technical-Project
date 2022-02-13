@@ -75,7 +75,6 @@ contract BlindAuction {
         NFT_staked_bool[NFT_address] = true;
         // just incase: we maintain a list of all current auctioned NFTS
         NFT_addresses_arr.push(NFT_address);
-        NFT_addresses_count += 1;
 
         Auction_Objects_array.push(auctionObj);
     }
