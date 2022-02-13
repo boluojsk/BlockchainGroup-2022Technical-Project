@@ -96,9 +96,21 @@ contract BlindAuction {
     }
 
     function endAuction(address NFT_address) public {
+        Auction_Object storage auctionObj = Auction_Objects[NFT_address];
+        require(!auctionObj.auctionEnded, "Auction already ended");
+        require(!auctionObj.auctionCanceled, "Auction already canceled");
+        require(block.timestamp >= auctionObj.auctionEndTime, "Auction duration has not elapsed yet");
+
+        auctionObj.auctionEnded = true;
     }
 
     function cancelAuction(address NFT_address) public{
+        Auction_Object storage auctionObj = Auction_Objects[NFT_address];
+        require(!auctionObj.auctionEnded, "Auction already ended");
+        require(!auctionObj.auctionCanceled, "Auction already canceled");
+        require(!auctionObj.bidSelected, "Bid already selected");
+
+        auctionObj.auctionCanceled = true;
     }
 
     function withdraw(address NFT_address) public{
