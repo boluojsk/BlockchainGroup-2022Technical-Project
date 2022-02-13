@@ -51,7 +51,7 @@ contract BlindAuction {
     Auction_Object[] Auction_Objects_array;
     // mapping of NFT_address to boolean. Necessary for checking whether the NFT is already staked
     mapping(address=>bool) NFT_staked_bool;
-    uint NFT_addresses_count = 0;
+    // just incase we need an array of NFT_addresses
     address[] NFT_addresses_arr;
 
 
