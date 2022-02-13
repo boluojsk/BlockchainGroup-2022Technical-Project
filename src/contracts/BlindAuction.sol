@@ -56,7 +56,7 @@ contract BlindAuction {
 
 
 
-    function startAuction(uint min_loan_amount, address NFT_address,uint auction_start_time,uint auction_duration) public{
+    function startAuction(uint min_loan_amount, address NFT_address,uint auction_duration) public{
         // identifies the state of the auction
         // add new Auction Object
         // each has a distinct NFT address
@@ -66,7 +66,7 @@ contract BlindAuction {
         auctionObj.beneficiary = payable(msg.sender);
         auctionObj.min_loan_amount = min_loan_amount;
         auctionObj.NFT_address = NFT_address;
-        auctionObj.auctionEndTime = auction_start_time + auction_duration;
+        auctionObj.auctionEndTime = block.timestamp + (auction_duration * 1 hours);
         auctionObj.bidSelected = false;
         auctionObj.auctionCanceled  = false;
         Auction_Objects[NFT_address] = auctionObj;
@@ -80,7 +80,7 @@ contract BlindAuction {
         Auction_Objects_array.push(auctionObj);
     }
 
-    function makeBid(uint loan_amt, uint int_rate, uint repayment_period, address NFT_address) payable public returns(bool){
+    function makeBid(uint loan_amt, uint int_rate, uint repayment_period, address NFT_address) payable public{
         Auction_Object storage auctionObj = Auction_Objects[NFT_address];
         require(loan_amt == msg.value, "Loan Amount inconsistent with Ether Sent");
         require(loan_amt >= auctionObj.min_loan_amount,"Loan Amount is less than the minimum required to make this bid");
@@ -91,7 +91,6 @@ contract BlindAuction {
             Bid(loan_amt, int_rate, repayment_period, msg.sender)
             );
         eligibleWithdrawals[NFT_address][msg.sender] += msg.value;
-        return true;
     }
 
     function selectBid(address selectedLender, address NFT_address) public returns(bool){
@@ -122,5 +121,10 @@ contract BlindAuction {
 
     // delete an Auction
     function deleteAuction(address NFT_address) public{
+    }
+
+    //return eligible withdrawal amt bidder is entitled to from a certain auction -> just for testing purposes
+    function showEligibleWithdrawal(address NFT_address) public view returns (uint){
+        return eligibleWithdrawals[NFT_address][msg.sender];
     }
 }

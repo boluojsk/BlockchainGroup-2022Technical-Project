@@ -14,7 +14,7 @@ contract('P2PLoan', (accounts) => {
   describe('deployment', async () => {
     it('should match first account on ganache', async () => {
       // change to your own acc on ganache
-      assert.equal(accounts[0], 0x91dF6A7B8cF1507dbda938d135C0C7b956082689)
+      //assert.equal(accounts[0], 0x91dF6A7B8cF1507dbda938d135C0C7b956082689)
     })
   })
 })
