@@ -14,10 +14,10 @@ contract('BlindAuction', (accounts) => {
   })
 
   describe('deployment', async () => {
-    it('should match first account on ganache', async () => {
+    it('should match 1st, 2nd, 3rd accounts on ganache', async () => {
       // change to your own accounts on ganache
-      assert.equal(accounts[0], 0x0FD69542cE44e59355e9D2F57a1aABd7c77cebED)
-      assert.equal(accounts[1], 0xb04cd5578e69740328930E461926C66519C0a468)
+      //assert.equal(accounts[0], 0x922DCBAC38d92E2063A9AdDb0c3A7014b317f3B0)
+      //assert.equal(accounts[1], 0xf192EB8A36b2691051fEa9a7fCE6da58Ef71bE3D)
 
     })
   })
