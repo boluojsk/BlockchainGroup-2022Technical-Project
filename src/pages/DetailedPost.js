@@ -20,26 +20,29 @@ const Wrapper = styled.div`
     "nft_img bid_history" 
     "footer footer";
 
+  border: 2px solid ${(props) => props.theme.borderColor};
+  border-radius: 0.5rem;
+
   
   .header {
     grid-area: header;
-    border: 1px solid ${(props) => props.theme.borderColor};
+    /* border: 1px solid ${(props) => props.theme.borderColor}; */
   }
 
   .nft-image {
     grid-area: nft_img;
-    border-left: 1px solid ${(props) => props.theme.borderColor};
+    /* border-left: 1px solid ${(props) => props.theme.borderColor}; */
     border-right: 1px solid ${(props) => props.theme.borderColor};
   }
 
   .bid-history {
     grid-area: bid_history;
-    border-right: 1px solid ${(props) => props.theme.borderColor};
+    /* border-right: 1px solid ${(props) => props.theme.borderColor}; */
   }
 
   .footer {
     grid-area: footer;
-    border: 2px solid ${(props) => props.theme.borderColor};
+    /* border: 2px solid ${(props) => props.theme.borderColor}; */
   }
 
   /* .post-info {
