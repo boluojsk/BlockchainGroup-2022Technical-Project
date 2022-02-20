@@ -15,7 +15,8 @@ const Routing = () => {
       <Nav />
       <Container>
         <Switch>
-          <Route path="/" component={Explore} />
+          <Route exact path="/" component={Explore} />
+          <Route path="/explore" component={Explore} />
           <Route path="/p/:postAddress" component={DetailedPost} />
           <Route path="/accounts/edit" component={EditProfile} />
           <Route path="/:address" component={Profile} />
