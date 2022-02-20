@@ -93,7 +93,7 @@ const Nav = () => {
                         Create Auction
                     </Button>
                 ) : (
-                    <></>
+                    <div></div>
                 )}
                 <ul>
                     <li>
