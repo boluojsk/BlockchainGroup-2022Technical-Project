@@ -12,7 +12,7 @@ contract P2PLoan is Pausable{
   // attaches SafeMath lib to uint datatype
   using SafeMath for uint; 
 
-  enum Status { PENDING, ACTIVE, CANCELLED, ENDED, DEFAULTED }
+  enum Status { ACTIVE, ENDED, DEFAULTED }
 
   // NFT loan post struct
   struct Loan {
@@ -32,7 +32,7 @@ contract P2PLoan is Pausable{
   // total number of loans created
   uint public numOfLoans;
   // map from loanID to loan instances
-  mapping(uint => Loan) public allLoans;
+  Loan[] public allLoans;
   // address of user who created loan
   address public creator; 
 
@@ -110,7 +110,7 @@ contract P2PLoan is Pausable{
     l.loanAmount = _loanAmount;
     l.interestRate = _interestRate;
     l.loanCompleteTimeStamp = _loanCompleteTimeStamp;
-    l.status = Status.PENDING;
+    l.status = Status.ACTIVE;
     numOfLoans = SafeMath.add(numOfLoans, 1);
 
     emit LoanCreated(
@@ -163,7 +163,7 @@ contract P2PLoan is Pausable{
   /**
     Allows borrowers to seize nft if loan not paid on time
    */
-  function seizeNFT(uint256 _loanID) external {
+  function loanDefaulted(uint256 _loanID) external {
     
 
     // Emit seize event
@@ -182,10 +182,24 @@ contract P2PLoan is Pausable{
   //  /**
   //   gets all loan listings
   //  */
-  //function getAllLoans() external view returns(int) {
-  //    return 0;
-  //  }
+  function getAllLoans() external view returns(Loan[] memory) {
+    return allLoans;
+  }
 
-  /// Return all the loans for one persons loans
+  //  /**
+  //   gets all loan listings that belong to one person
+  //  */
+  function getAllUserLoans(address userAddress) external view returns(Loan[] memory) {
+    Loan[] memory user_loans;
+    for (uint i = 0 ; i < allLoans.length; i++){
+        if (userAddress == allLoans[i].lender || userAddress == allLoans[i].borrower){
+          user_loans[i] = allLoans[i];
+        }
+    }
+    return user_loans;
+  }
+
+  // return type needs to be changed accordingly !!
+
 
 }
