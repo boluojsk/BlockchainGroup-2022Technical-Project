@@ -31,20 +31,22 @@ contract('BlindAuction', (accounts) => {
       assert.equal(auctionObj.min_loan_amount, 10)
     })
     it('make bid', async () => {
-      await contract.makeBid(11,1,3,accounts[1],{from:accounts[2],value:11})
-      const auctionObj = await contract.getAuctionObject(accounts[1],{from:accounts[0]})
-      assert.equal(auctionObj.availableBids[0].loan_amount, 11);
-      assert.equal(auctionObj.availableBids[0].interest_rate, 1);
-      assert.equal(auctionObj.availableBids[0].repayment_time, 3);
-      assert.equal(auctionObj.availableBids[0].bidder_address, accounts[2]);
-      // ensure that the eligibleWithdrawal includes how much they bid
-      const eligibleWithdrawal1 = await contract.showEligibleWithdrawal(accounts[1],{from:accounts[2]})
-      assert.equal(eligibleWithdrawal1, 11);
-      // make new bid
-      await contract.makeBid(13,1,3,accounts[1],{from:accounts[2],value:13})
-      const eligibleWithdrawal2 = await contract.showEligibleWithdrawal(accounts[1],{from:accounts[2]})
-      // bid 1 amt + bid 2 amt
-      assert.equal(eligibleWithdrawal2, 11 + 13);
-    })
+      try{
+        await contract.makeBid(11,1,3,accounts[1],{from:accounts[2],value:11})
+        const auctionObj = await contract.getAuctionObject(accounts[1],{from:accounts[0]})
+        assert.equal(auctionObj.availableBids[0].loan_amount, 11);
+        assert.equal(auctionObj.availableBids[0].interest_rate, 1);
+        assert.equal(auctionObj.availableBids[0].repayment_time, 3);
+        assert.equal(auctionObj.availableBids[0].bidder_address, accounts[2]);
+        // ensure that the eligibleWithdrawal includes how much they bid
+        const eligibleWithdrawal1 = await contract.showEligibleWithdrawal(accounts[1],{from:accounts[2]})
+        assert.equal(eligibleWithdrawal1, 11);
+        // make new bid
+        await contract.makeBid(13,1,3,accounts[1],{from:accounts[2],value:13})
+        const eligibleWithdrawal2 = await contract.showEligibleWithdrawal(accounts[1],{from:accounts[2]})
+        // bid 1 amt + bid 2 amt
+        assert.equal(eligibleWithdrawal2, 11 + 13)
+      }catch(error){console.log(error)}
+    }) 
   })
 })
