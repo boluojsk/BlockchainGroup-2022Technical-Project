@@ -145,9 +145,8 @@ const Profile = () => {
           ) : (
             <div>
               {/* TODO: make sure to return only posts user has borrowed */}
-              {profile?.borrowPosts?.map((post) => (
-                  <ExpandedPost key={post._id} post={post} />
-              ))}
+              <PostPreview posts={profile?.borrowPosts} />
+
             </div>
           )}
         </>
@@ -164,9 +163,8 @@ const Profile = () => {
             ) : (
                 <div>
                   {/* TODO: make sure to return only posts user has lent */}
-                  {profile?.loanPosts?.map((post) => (
-                      <ExpandedPost key={post._id} post={post} />
-                  ))}
+                  <PostPreview posts={profile?.loanPosts} active={false}/>
+
                 </div>
             )}
           </>
@@ -184,7 +182,7 @@ const Profile = () => {
                 <div>
                   {/* TODO: make sure to return only posts user has already completed */}
                   {profile?.history?.map((post) => (
-                      <ExpandedPost key={post._id} post={post} />
+                      <ExpandedPost key={post._id} prop_post={post} />
                   ))}
                 </div>
             )}
