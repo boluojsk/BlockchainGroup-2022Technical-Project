@@ -172,7 +172,19 @@ contract BlindAuction {
     }
 
     // delete NFT listing i.e after the loan has been repayed
-    function removeNFTListing(address NFT_address) public {}
+    function removeNFTListing(address NFT_address) public {
+        uint nft_index;
+        for (uint i = 0; i < NFT_addresses_arr.length; i++) {
+            if (NFT_addresses_arr[i] == NFT_address) {
+                nft_index = i;
+            }
+        }
+        NFT_addresses_arr[nft_index] = NFT_addresses_arr[NFT_addresses_arr.length - 1];
+        NFT_addresses_arr.pop();
+        Auction_Objects_array[nft_index] = Auction_Objects_array[Auction_Objects_array.length - 1];
+        Auction_Objects_array.pop();
+        delete Auction_Objects[NFT_address];
+    }
 
     // delete an Auction
     function deleteAuction(address NFT_address) public {}
