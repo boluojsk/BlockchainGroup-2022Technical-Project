@@ -72,9 +72,7 @@ export const PostWrapper = styled.div`
     width: 80%;
   }
   
-  span {
-    width: 300px
-  }
+   
 
   textarea {
     margin-top: 1rem;
@@ -109,6 +107,11 @@ const CreatePost = ({ open, onClose, post }) => {
     const [postImage, setPostImage] = useState("");
     const { feed, setFeed } = useContext(FeedContext);
     const caption = useInput("");
+    const address = useInput("")
+    const amount = useInput();
+    const duration = useInput();
+    const interest = useInput();
+    
 
     // if modal is not open, return null
     if (!open) return null;
@@ -158,16 +161,30 @@ const CreatePost = ({ open, onClose, post }) => {
               <h1>
                   <span className="caption bold">
                       <textarea
-                          placeholder="address"
-                          value={caption.value}
-                          onChange={caption.onChange}
+                          placeholder="Address"
+                          value={address.value}
+                          onChange={address.onChange}
                       />
                   </span>
                   <span className="caption ">
                       <textarea
-                          placeholder="price"
-                          value={caption.value}
-                          onChange={caption.onChange}
+                          placeholder="Amount"
+                          value={amount.value}
+                          onChange={amount.onChange}
+                      />
+                  </span>
+                  <span className="caption ">
+                      <textarea
+                          placeholder="Duration"
+                          value={duration.value}
+                          onChange={duration.onChange}
+                      />
+                  </span>
+                  <span className="caption ">
+                      <textarea
+                          placeholder="Interest"
+                          value={interest.value}
+                          onChange={interest.onChange}
                       />
                   </span>
               </h1>
