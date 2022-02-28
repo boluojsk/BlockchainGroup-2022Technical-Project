@@ -15,6 +15,8 @@ contract BlindAuction {
         uint loan_amount;
         uint interest_rate;
         uint repayment_time;
+        // ID identifying the bid
+        uint bidID;
         // address of bidder
         address bidder_address;
     }
@@ -58,6 +60,9 @@ contract BlindAuction {
 
         // whether all bids have been revealed
         bool allBidsRevealed;
+
+        // counter for bid IDs
+        uint bidIDcounter;
         }
 
     // mapping of NFT_addres to auction_objects
@@ -100,6 +105,7 @@ contract BlindAuction {
         auctionObj.allBidsRevealed = false;
         Auction_Objects[NFT_address] = auctionObj;
 
+
         // since NFT has been staked change boolean to true
         NFT_staked_bool[NFT_address] = true;
         // just incase: we maintain a list of all current auctioned NFTS
@@ -130,10 +136,10 @@ contract BlindAuction {
     }
 
     function revealBid(uint[][] memory allSentLoanTerms, bool[] memory fake_, address NFT_address) public{
-
+        // store revvealed bid with BID ID and increment bid ID counter
     }
 
-    function selectBid(address selectedLender, address NFT_address) public returns(bool){
+    function selectBid(address selectedLender, uint256 bidID, address NFT_address) public returns(bool){
        
     }
 
