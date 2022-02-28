@@ -26,27 +26,18 @@ contract('BlindAuction', (accounts) => {
   //other accounts -> bidders from account[2] to account[9]
   describe('sample testing',async () => {
     it('start auction', async () => {
-      await contract.startAuction(10,accounts[1],3,{from:accounts[0]})
+      await contract.startAuction(10,1,2,accounts[1],1,3,{from:accounts[0]})
       const auctionObj = await contract.getAuctionObject(accounts[1],{from:accounts[0]})
       assert.equal(auctionObj.min_loan_amount, 10)
+      assert.equal(auctionObj.max_interest_rate, 1)
+      assert.equal(auctionObj.min_repayment_period, 2)
     })
     it('make bid', async () => {
       try{
-        await contract.makeBid(11,1,3,accounts[1],{from:accounts[2],value:11})
+        await contract.makeBid(11,1,3,false,accounts[1],{from:accounts[2],value:11})
         const auctionObj = await contract.getAuctionObject(accounts[1],{from:accounts[0]})
-        assert.equal(auctionObj.availableBids[0].loan_amount, 11);
-        assert.equal(auctionObj.availableBids[0].interest_rate, 1);
-        assert.equal(auctionObj.availableBids[0].repayment_time, 3);
-        assert.equal(auctionObj.availableBids[0].bidder_address, accounts[2]);
-        // ensure that the eligibleWithdrawal includes how much they bid
-        const eligibleWithdrawal1 = await contract.showEligibleWithdrawal(accounts[1],{from:accounts[2]})
-        assert.equal(eligibleWithdrawal1, 11);
-        // make new bid
-        await contract.makeBid(13,1,3,accounts[1],{from:accounts[2],value:13})
-        const eligibleWithdrawal2 = await contract.showEligibleWithdrawal(accounts[1],{from:accounts[2]})
-        // bid 1 amt + bid 2 amt
-        assert.equal(eligibleWithdrawal2, 11 + 13)
+        assert.equal(auctionObj.blindedBids[0].depositValue, 11);
       }catch(error){console.log(error)}
-    }) 
+    })
   })
 })
