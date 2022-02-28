@@ -132,6 +132,27 @@ contract P2PLoan is Pausable{
     Enables NFT owner to draw capital from top bid
    */
   function drawLoan(uint _loanID) external isValidLoanID(_loanID){
+  
+// lender address is the address of the NFT owner
+address lender_address = Loan[1];
+
+// borrower address is the third element in the loan struct
+address borrower_address = Loan[2];
+// loan amount is the sixth element in the loan struct
+uint loan_amount = Loan[5];
+
+
+
+
+
+// fetch and display relevant loan information given _loanID
+
+// _loanID has info about 
+// transfer 100% of loan capital to borrower’s address
+
+
+
+// update loan information from chain and store information
 
     // Emit draw event
     emit LoanDrawn(_loanID);
