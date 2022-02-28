@@ -140,7 +140,20 @@ contract BlindAuction {
     }
 
     function selectBid(address selectedLender, uint256 bidID, address NFT_address) public returns(bool){
+        Auction_Object storage auctionObj = Auction_Objects[NFT_address];
+        require(!auctionObj.bidSelected, "A bid has already been selected");
+	    require(!auctionObj.auctionCanceled, "Auction was canceled");
+        auctionObj.auctionEnded = true;
+        
+        require(auctionObj.revealedBids[bidID].bidder_address == selectedLender,"BidID doesn't correspond with selectedLender");
        
+        RevealedBid storage bidSelected = auctionObj.revealedBids[bidID];
+        eligibleWithdrawals[NFT_address][selectedLender] = eligibleWithdrawals[NFT_address][selectedLender] - bidSelected.loan_amount;
+        //transfer ether to the beneficiary of the auction i.e the loanee
+        auctionObj.beneficiary.transfer(bidSelected.loan_amount);
+        //figure out how to send this info to NFT contract
+        auctionObj.selectedBid = bidSelected;
+        auctionObj.bidSelected = true;
     }
 
     function endAuction(address NFT_address) public {
