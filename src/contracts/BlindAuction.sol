@@ -192,7 +192,6 @@ contract BlindAuction {
     // delete NFT listing i.e after the loan has been repayed
     function removeNFTListing(address NFT_address) public 
     {
-
     }
 
     // delete an Auction
