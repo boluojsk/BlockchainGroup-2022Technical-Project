@@ -2,55 +2,87 @@
 pragma solidity ^0.8.4;
 
 contract BlindAuction {
-    struct Bid {
-        uint256 loan_amount;
-        uint256 interest_rate;
-        uint256 repayment_time;
+    struct BlindedBid{
+        // blinded/hashed version of bid
+        bytes32 hashedBidVal;
+        // address of bidder
+        address bidder_address;
+        // deposit
+        uint depositValue;
+    }
+
+    struct RevealedBid{
+        uint loan_amount;
+        uint interest_rate;
+        uint repayment_time;
         // address of bidder
         address bidder_address;
     }
 
-    struct Auction_Object {
+    struct Auction_Object{
         // address of the loanee who will receive the loan once the auction ends or they selected a bid
         address payable beneficiary; // the owner of the NFT i.e the person who wants a loan
-        // address of NFT
-        address NFT_address;
-        // minimum acceptable loan amount
-        uint256 min_loan_amount;
-        // list of all the bids that have been made so far
-        Bid[] availableBids;
-        // list of addresses that are allowed to withdraw ether sent when making bid(i.e the bidders who did not win the auction)
 
-        // the Auction window
-        uint256 auctionEndTime;
+        // address of NFT 
+        address NFT_address;
+
+        // minimum acceptable loan amount
+        uint min_loan_amount;
+
+        // maximum interest rate
+        uint max_interest_rate;
+
+        // minimum repayment period
+        uint min_repayment_period;
+
+        // list of blinded bids
+        BlindedBid[] blindedBids;
+
+        // list of revealed bids
+        RevealedBid[] revealedBids;
+
+        // the Auction window 
+        uint auctionEndTime;
+
         // whether the owner of auction i.e the beneficiary has selected a bid
         bool bidSelected;
+
         // address of selected bid
-        Bid selectedBid;
+        RevealedBid selectedBid;
+
         // whether the auction has ended
         bool auctionEnded;
+
         // whether the owner of auction i.e the beneficiary has canceled the auction
         bool auctionCanceled;
-    }
 
-    // mapping of NFT_address to auction_objects
-    mapping(address => Auction_Object) public Auction_Objects;
+        // whether all bids have been revealed
+        bool allBidsRevealed;
+        }
 
-    //maps NFT address to specific bidder address to the withdrawal amount they're supposed to get
-    mapping(address => mapping(address => uint256)) public eligibleWithdrawals;
+    // mapping of NFT_addres to auction_objects
+    mapping(address=>Auction_Object) public Auction_Objects;
+
+
+    //maps NFT address to specific bidder address to their Blinded Bid
+    mapping(address=>mapping(address=>BlindedBid[])) public allBlindedBids;
+
+    //maps NFT address to specific bidder address to the withdrawal amt they're supposed to get
+    mapping(address=>mapping(address=>uint)) public eligibleWithdrawals;
 
     // auctionObjects Array;
     Auction_Object[] Auction_Objects_array;
-    // mapping of NFT_address to boolean. Necessary for checking whether the NFT is already staked
-    mapping(address => bool) NFT_staked_bool;
-    // just incase we need an array of NFT_addresses
+    // mapping of NFT_addess to boolean. Necessary for checking whether the NFT is already staked
+    mapping(address=>bool) NFT_staked_bool;
+    uint NFT_addresses_count = 0;
     address[] NFT_addresses_arr;
 
-    function startAuction(
-        uint256 min_loan_amount,
-        address NFT_address,
-        uint256 auction_duration
-    ) public {
+    // makes the Hash value
+    function generateHashedBid(uint loan_amt, uint int_rate, uint repayment_period, bool fake) internal pure returns (bytes32){
+        return keccak256(abi.encodePacked(loan_amt, int_rate, repayment_period, fake));
+    }
+
+    function startAuction(uint min_loan_amount, uint max_interest_rate, uint min_repayment_period, address NFT_address,uint auction_start_time,uint auction_duration) public{
         // identifies the state of the auction
         // add new Auction Object
         // each has a distinct NFT address
@@ -59,50 +91,51 @@ contract BlindAuction {
         Auction_Object storage auctionObj = Auction_Objects[NFT_address];
         auctionObj.beneficiary = payable(msg.sender);
         auctionObj.min_loan_amount = min_loan_amount;
+        auctionObj.max_interest_rate = max_interest_rate;
+        auctionObj.min_repayment_period = min_repayment_period;
         auctionObj.NFT_address = NFT_address;
-        auctionObj.auctionEndTime =
-            block.timestamp +
-            (auction_duration * 1 hours);
+        auctionObj.auctionEndTime = auction_start_time + auction_duration;
         auctionObj.bidSelected = false;
-        auctionObj.auctionCanceled = false;
+        auctionObj.auctionCanceled  = false;
+        auctionObj.allBidsRevealed = false;
         Auction_Objects[NFT_address] = auctionObj;
 
         // since NFT has been staked change boolean to true
         NFT_staked_bool[NFT_address] = true;
         // just incase: we maintain a list of all current auctioned NFTS
         NFT_addresses_arr.push(NFT_address);
+        NFT_addresses_count += 1;
 
         Auction_Objects_array.push(auctionObj);
     }
-
-    function makeBid(
-        uint256 loan_amt,
-        uint256 int_rate,
-        uint256 repayment_period,
-        address NFT_address
-    ) public payable {
+    
+    function makeBid(uint loan_amt, uint int_rate, uint repayment_period, bool fake, address NFT_address) payable public{
         Auction_Object storage auctionObj = Auction_Objects[NFT_address];
-        require(
-            loan_amt == msg.value,
-            "Loan Amount inconsistent with Ether Sent"
-        );
-        require(
-            loan_amt >= auctionObj.min_loan_amount,
-            "Loan Amount is less than the minimum required to make this bid"
-        );
-        require(!auctionObj.auctionEnded, "Auction has Ended");
+        require (!auctionObj.auctionEnded, "Auction has Ended");
         require(!auctionObj.auctionCanceled, "Auction was canceled");
+        // ensure that bidder is not making the same bid
+        bytes32 HashVal = generateHashedBid(loan_amt, int_rate, repayment_period, fake);
+        BlindedBid[] storage bidsToCheck = allBlindedBids[NFT_address][msg.sender];
+        for(uint i = 0; i < bidsToCheck.length; i++){
+            require(bidsToCheck[i].hashedBidVal != HashVal, "You've already placed this bid before");
+        }
         // add bid to availableBids
-        auctionObj.availableBids.push(
-            Bid(loan_amt, int_rate, repayment_period, msg.sender)
+        auctionObj.blindedBids.push(
+            BlindedBid(HashVal, msg.sender, msg.value
+            ));
+        allBlindedBids[NFT_address][msg.sender].push(
+            BlindedBid(HashVal, msg.sender, msg.value
+            )
         );
-        eligibleWithdrawals[NFT_address][msg.sender] += msg.value;
     }
 
-    function selectBid(address selectedLender, address NFT_address)
-        public
-        returns (bool)
-    {}
+    function revealBid(uint[][] memory allSentLoanTerms, bool[] memory fake_, address NFT_address) public{
+
+    }
+
+    function selectBid(address selectedLender, address NFT_address) public returns(bool){
+       
+    }
 
     function endAuction(address NFT_address) public {
         Auction_Object storage auctionObj = Auction_Objects[NFT_address];
@@ -125,28 +158,19 @@ contract BlindAuction {
     // Allows bidders whose bids were not selected to withdraw the ether they had bid.
     //The function is only viewable by the bidders-> frontend
 
-       //     for the selected bidder who has made more than one bit, it needs to return the bids that are not selected
-    function withdraw(address NFT_address) public {
+    // for the selected bidder who has made more than one bit, it needs to return the bids that are not selected
+    function withdraw(address NFT_address) public 
+    {
         Auction_Object storage auctionObj = Auction_Objects[NFT_address];
         require(auctionObj.auctionEnded, "Auction has not ended yet");
-        require(
-            auctionObj.bidSelected,
-            "The auction owner has not selected a bid yet"
-        );
+        require(auctionObj.bidSelected, "The auction owner has not selected a bid yet");
         uint256 amount = eligibleWithdrawals[NFT_address][msg.sender];
-
-        // Make sure the selected bid's lender cannot withdraw their funds.
-        require(
-            auctionObj.selectedBid.bidder_address != msg.sender,
-            "The auction owner has not selected a bid yet"
-        );
 
         // a more secure way to do this??
         // https://docs.soliditylang.org/en/v0.8.7/common-patterns.html
         if (amount > 0) {
             // Set the account's eligible withdrawal to zero
             eligibleWithdrawals[NFT_address][msg.sender] = 0;
-
             // pay back the money they sent
             // read that call is better than transfer for receiving money????
             payable(msg.sender).transfer(amount);
@@ -154,34 +178,31 @@ contract BlindAuction {
     }
 
     // get a single Auction Object for one NFT address
-    function getAuctionObject(address NFT_address)
-        public
-        view
-        returns (Auction_Object memory Auct_Obj)
+    function getAuctionObject(address NFT_address) public view returns (Auction_Object memory Auct_Obj)
     {
         return Auction_Objects[NFT_address];
     }
 
     // get all the Auction Objects
-    function getAllAuctionObjects()
-        public
-        view
-        returns (Auction_Object[] memory Auct_Objs)
+    function getAllAuctionObjects() public view returns (Auction_Object[] memory Auct_Objs)
     {
         return Auction_Objects_array;
     }
 
     // delete NFT listing i.e after the loan has been repayed
-    function removeNFTListing(address NFT_address) public {}
+    function removeNFTListing(address NFT_address) public 
+    {
+
+    }
 
     // delete an Auction
-    function deleteAuction(address NFT_address) public {}
+    function deleteAuction(address NFT_address) public 
+    {
+
+    }
 
     //return eligible withdrawal amt bidder is entitled to from a certain auction -> just for testing purposes
-    function showEligibleWithdrawal(address NFT_address)
-        public
-        view
-        returns (uint256)
+    function showEligibleWithdrawal(address NFT_address) public view returns (uint256)
     {
         return eligibleWithdrawals[NFT_address][msg.sender];
     }
