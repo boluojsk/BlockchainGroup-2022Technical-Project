@@ -39,6 +39,19 @@ contract('BlindAuction', (accounts) => {
         assert.equal(auctionObj.blindedBids[0].depositValue, 11);
       }catch(error){console.log(error)}
     })
+    it('reveal bid', async () => {
+      try{
+        await contract.revealBid([[11,1,3]],[false],accounts[1],{from:accounts[2]})
+        const auctionObj = await contract.getAuctionObject(accounts[1],{from:accounts[0]})
+        //console.log(auctionObj.revealedBids.length)
+        assert.equal(auctionObj.revealedBids[0].loan_amount, 11);
+        assert.equal(auctionObj.revealedBids[0].interest_rate, 1);
+        assert.equal(auctionObj.revealedBids[0].repayment_time, 3);
+        assert.equal(auctionObj.revealedBids[0].bidder_address, accounts[2]);
+        const eligibleWithdrawal1 = await contract.showEligibleWithdrawal(accounts[1],{from:accounts[2]})
+        assert.equal(eligibleWithdrawal1,11)
+      }catch(error){console.log(error)}
+    })
     it('select bid', async () => {
       try{
         await contract.selectBid(accounts[2],0,accounts[1])

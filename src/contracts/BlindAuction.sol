@@ -135,11 +135,42 @@ contract BlindAuction {
         );
     }
 
-    function revealBid(uint[][] memory allSentLoanTerms, bool[] memory fake_, address NFT_address) public{
-        // store revvealed bid with BID ID and increment bid ID counter
+     function revealBid(uint[][] memory allSentLoanTerms, bool[] memory fake_, address NFT_address) public{
+        Auction_Object storage auctionObj = Auction_Objects[NFT_address];
+        BlindedBid[] storage bidsToCheck = allBlindedBids[NFT_address][msg.sender];
+        require(allSentLoanTerms.length == bidsToCheck.length,"Different Lengths");
+        require(fake_.length == bidsToCheck.length,"Different Lengths");
+        for(uint i = 0; i < bidsToCheck.length ;i++){
+            (uint loan_amt,uint int_rate, uint rep_period) = (allSentLoanTerms[i][0],allSentLoanTerms[i][1],allSentLoanTerms[i][2]);
+            bool fake = fake_[i];
+            if (bidsToCheck[i].hashedBidVal != generateHashedBid(loan_amt,int_rate,rep_period,fake)){
+                // bid was not revealed so continue
+                continue;
+            }
+            // check if not fake and that the depositValue is enough
+            if (!fake && bidsToCheck[i].depositValue >= loan_amt){
+                // check is the bid meet loan terms criteria
+                if (loan_amt >= auctionObj.min_loan_amount && 
+                int_rate <= auctionObj.max_interest_rate && 
+                rep_period >= auctionObj.min_repayment_period){
+                    auctionObj.revealedBids.push(
+                        RevealedBid(loan_amt,int_rate,rep_period,auctionObj.bidIDcounter, msg.sender)
+                        );
+                    auctionObj.bidIDcounter += 1;
+                }
+            }
+            // Make it impossible for the sender to re-claim
+            // the same deposit.
+            bidsToCheck[i].hashedBidVal = 0x0;
+
+            // save the money they deposited as eligible withdrawal
+            eligibleWithdrawals[NFT_address][msg.sender] += bidsToCheck[i].depositValue;
+
+        }
+
     }
 
-    function selectBid(address selectedLender, uint256 bidID, address NFT_address) public returns(bool){
+    function selectBid(address selectedLender, uint256 bidID, address NFT_address) public{
         Auction_Object storage auctionObj = Auction_Objects[NFT_address];
         require(!auctionObj.bidSelected, "A bid has already been selected");
 	    require(!auctionObj.auctionCanceled, "Auction was canceled");
@@ -151,7 +182,6 @@ contract BlindAuction {
         eligibleWithdrawals[NFT_address][selectedLender] = eligibleWithdrawals[NFT_address][selectedLender] - bidSelected.loan_amount;
         //transfer ether to the beneficiary of the auction i.e the loanee
         auctionObj.beneficiary.transfer(bidSelected.loan_amount);
-        //figure out how to send this info to NFT contract
         auctionObj.selectedBid = bidSelected;
         auctionObj.bidSelected = true;
     }
@@ -177,7 +207,7 @@ contract BlindAuction {
     // Allows bidders whose bids were not selected to withdraw the ether they had bid.
     //The function is only viewable by the bidders-> frontend
 
-    // for the selected bidder who has made more than one bit, it needs to return the bids that are not selected
+    // for the selected bidder who has made more than one bid, it needs to return the bids that are not selected
     function withdraw(address NFT_address) public 
     {
         Auction_Object storage auctionObj = Auction_Objects[NFT_address];
