@@ -4,19 +4,47 @@ import { useHistory } from "react-router-dom";
 import useInput from "../hooks/useInput";
 import {client, uploadImage} from "../utils";
 import { timeSince } from "../utils";
-import { MoreIcon, CommentIcon, InboxIcon } from "./Icons";
+import { CloseIcon, MoreIcon, CommentIcon, InboxIcon } from "./Icons";
 import {toast} from "react-toastify";
 import Button from "../styles/Button";
 import { FeedContext } from "../context/FeedContext";
 
 export const PostWrapper = styled.div`
-  width: 100%;
-  background: ${(props) => props.theme.white};
-  border: 1px solid ${(props) => props.theme.white};
-  margin-bottom: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  /* width: 100%; */
+
+  .modal {
+    background: ${(props) => props.theme.white};
+    border: 1px solid ${(props) => props.theme.white};
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  
+    position: fixed;
+    padding: 5rem;
+    border: 1px solid black;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000;
+    border-radius: 0.5rem;
+  }
+
+  .fill-page {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(2px);
+    z-index: 1000;
+  }
+
+  span {
+    font-size: xx-large;
+    fontWeight: bold;
+  }
 
   ul {
     display: flex;
@@ -34,15 +62,17 @@ export const PostWrapper = styled.div`
     vertical-align: center;
     height: 100%;
   }
+
+  .button {
+    margin: 1rem;
+  }
   
   h1 {
     margin-left: 2rem;
     width: 80%;
   }
   
-  span {
-    width: 300px
-  }
+   
 
   textarea {
     margin-top: 1rem;
@@ -70,18 +100,27 @@ export const PostWrapper = styled.div`
   }
 `;
 
-const CreatePost = ({ post }) => {
+// CreatePost is a MODAL!!
+const CreatePost = ({ open, onClose, post }) => {
+
     const history = useHistory();
     const [postImage, setPostImage] = useState("");
     const { feed, setFeed } = useContext(FeedContext);
     const caption = useInput("");
+    const address = useInput("")
+    const amount = useInput();
+    const duration = useInput();
+    const interest = useInput();
+    
+
+    // if modal is not open, return null
+    if (!open) return null;
 
     // TODO: implement minting function
     const handleSubmitPost = () => {
         if (!caption.value) {
             return toast.error("Please write something");
         }
-
 
         const tags = caption.value
             .split(" ")
@@ -112,34 +151,62 @@ const CreatePost = ({ post }) => {
     };
 
     return (
+      <>
         <PostWrapper>
-            <h1>
-                <span className="caption bold">
-                    <textarea
-                        placeholder="address"
-                        value={caption.value}
-                        onChange={caption.onChange}
-                    />
-                </span>
-                <span className="caption ">
-                    <textarea
-                        placeholder="price"
-                        value={caption.value}
-                        onChange={caption.onChange}
-                    />
-                </span>
-            </h1>
-            <ul>
-                <li>
-                    <Button
-                        secondary
-                        onClick={() => toast.success("function not added")}
-                    >
-                        post
-                    </Button>
-                </li>
-            </ul>
+          <div className="fill-page"></div>
+          <div className="modal">
+              <div className="header">                
+                <div><span>CREATE AUCTION</span></div>
+              </div>
+              <h1>
+                  <span className="caption bold">
+                      <textarea
+                          placeholder="Address"
+                          value={address.value}
+                          onChange={address.onChange}
+                      />
+                  </span>
+                  <span className="caption ">
+                      <textarea
+                          placeholder="Amount"
+                          value={amount.value}
+                          onChange={amount.onChange}
+                      />
+                  </span>
+                  <span className="caption ">
+                      <textarea
+                          placeholder="Duration"
+                          value={duration.value}
+                          onChange={duration.onChange}
+                      />
+                  </span>
+                  <span className="caption ">
+                      <textarea
+                          placeholder="Interest"
+                          value={interest.value}
+                          onChange={interest.onChange}
+                      />
+                  </span>
+              </h1>
+              <ul>
+                  <li>
+                      <Button
+                          onClick={onClose}
+                          className="button"
+                      >
+                         &#x2715; Cancel
+                      </Button>
+                      <Button
+                          onClick={() => toast.success("function not added")}
+                          className="button"
+                      >
+                          Continue &#x2192;
+                      </Button>
+                  </li>
+              </ul>
+            </div>
         </PostWrapper>
+      </>
     );
 };
 

@@ -108,15 +108,7 @@ const Profile = () => {
           <SavedIcon    icon="HISTORY" tabId={tab}/>
           <span>History</span>
         </div>
-        {profile?.isMe &&
-          <div
-              style={{ fontWeight: tab === "CREATE" ? "500" : "" }}
-          onClick={() => setTab("CREATE")} 
-          >
-            <SavedIcon  icon="CREATE" tabId={tab}/>
-            <span>Create</span>
-          </div>
-        }
+        
       </div>
 
       {tab === "BIDS" && (
@@ -191,11 +183,6 @@ const Profile = () => {
           </>
       )}
 
-      {tab === "CREATE" && (
-          <>
-            <CreatePost key={1} post={post1} />
-          </>
-      )}
     </Wrapper>
   );
 };
