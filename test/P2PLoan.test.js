@@ -1,6 +1,75 @@
 const { assert } = require('chai');
 require('dotenv').config();
 
+function makeStruct(names) {
+  var names = names.split(' ');
+  var count = names.length;
+  function constructor() {
+    for (var i = 0; i < count; i++) {
+      this[names[i]] = arguments[i];
+    }
+  }
+  return constructor;
+}
+
+var loanArgs = makeStruct(
+  "lender borrower NFTtokenID NFTtokenAddress loanAmount interestRate loanDuration"
+);
+
+function getRandomInt(max) {
+  return Math.floor(Math.random() * max);
+}
+
+// factory function for creating new random loans
+// use count to specify how many loans to create
+// set rand to true to randomize output
+async function loanFactory(_contract, accounts, count, rand=false) {
+  for (var i = 0; i < count; i++){
+    var a = i % 10;
+    if (rand){
+      a = getRandomInt(10)
+    }
+    const b = (a + 1) % 10
+    const c = (a + 2) % 10
+
+    const randArgs = new loanArgs(
+      accounts[a], // lender address
+      accounts[b], // borrower address
+      0, // token id
+      accounts[c], // token address
+      getRandomInt(1000), // loan amount
+      getRandomInt(50),  // monthly interest rate
+      (getRandomInt(11) + 1) * 30, // loan duration in days
+    );
+
+    const args = new loanArgs(
+      accounts[0], // lender address
+      accounts[1], // borrower address
+      0, // token id
+      accounts[2], // token address
+      100, // loan amount
+      2,  // monthly interest rate
+      30, // loan duration in days
+    );
+
+    if (rand) {
+      await _contract.createLoan.sendTransaction(
+        randArgs, { from: accounts[0], gas:3000000} // sent from the lender
+      );
+    } else {
+      await _contract.createLoan.sendTransaction(
+        args, { from: accounts[0], gas:3000000} // sent from the lender
+      );
+    }
+  }
+}
+
+
+/* commands
+  truffle test ./test/P2PLoan.test.js
+  truffle test --show-events ./test/P2PLoan.test.js
+*/
+
 // SPDX-License-Identifier: GPL-3.0
 const P2PLoan = artifacts.require('./P2PLoan.sol')
 
@@ -44,11 +113,23 @@ contract('P2PLoan', (accounts) => {
     it('should populate allLoans with correct data', async () => {
       const loan = await contract.getLoan.call(0);
       assert.equal(loan.loanID, 0, "loanID incorrect")
-      assert.equal(loan.lender, 0x0, "lender address incorrect")
-      assert.equal(loan.borrower, accounts[0], "borrower address incorrect")
+      assert.equal(loan.lender, accounts[0], "lender address incorrect")
+      assert.equal(loan.borrower, accounts[1], "borrower address incorrect")
       assert.equal(loan.NFTtokenID, 0, "TokenID incorrect")
-      assert.equal(loan.NFTtokenAddress, accounts[1], "token address incorrect")
+      assert.equal(loan.NFTtokenAddress, accounts[2], "token address incorrect")
+      assert.equal(loan.loanAmount, 100, "loan amount incorrect")
+      assert.equal(loan.totalAmountDue, 102, "loan amount due incorrect")
+      assert.equal(loan.interestRate, 2, "loan interest incorrect")
+      assert.equal(loan.loanDuration, 30, "duration incorrect")
       assert.equal(loan.status, 0, "status incorrect")
+    })
+
+    it('should calculate completeTimeStamp', async () => {
+      const loan = await contract.getLoan.call(0);
+      const startTime = Number(loan.loanCreatedTimeStamp)
+      const endTime = startTime + loan.loanDuration * 86400
+
+      assert.equal(loan.loanCompleteTimeStamp, endTime, "complete time stamp incorrect")
     })
   })
 
@@ -76,12 +157,7 @@ contract('P2PLoan', (accounts) => {
       contract = await P2PLoan.deployed()    // always deploy a brand new contract with empty allLoans
     })
 
-    for (let i = 0; i < 3, i ++) {
-      await contract.createLoan.sendTransaction(
-        accounts[i + 1], 0, 100, 2, Math.round(Date.now() / 1000) + 100 * i,   // then, create/initiate your loan instances as needed to test the function
-        { from: accounts[i] }
-      );
-    }
+    await loanFactory(contract, accounts, 5) // creates 5 new loans
 
     it('should behave like this', async () => {
       # calling a function that changes the block chain directly requires
