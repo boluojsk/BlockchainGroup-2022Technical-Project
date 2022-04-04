@@ -202,4 +202,11 @@ contract P2PLoan is Pausable{
   // return type needs to be changed accordingly !!
 
 
+
+  function extendLoan(uint _loanID, uint _time) external view{
+    require (msg.sender == allLoans[_loanID].lender, "Only the lender may extend the loan.");
+    
+  }
+
+
 }
