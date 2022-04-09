@@ -1,6 +1,6 @@
-import React, {useContext, useState} from "react";
+import React, {useContext, useEffect, useState} from "react";
 import styled from "styled-components";
-import { useHistory } from "react-router-dom";
+import { useHistory, useRouteMatch } from "react-router-dom";
 import useInput from "../hooks/useInput";
 import {client, uploadImage} from "../utils";
 import { timeSince } from "../utils";
@@ -9,25 +9,50 @@ import {toast} from "react-toastify";
 import Button from "../styles/Button";
 import { FeedContext } from "../context/FeedContext";
 
-export const PostWrapper = styled.div`
+export const CreatePostWrapper = styled.div`
   /* width: 100%; */
 
-  .modal {
+  .carousel {    
+    position: fixed;
+     
+    top: 50%;
+    /* left: 50%; */
+    width: 50%;
+    transform: translate(50%, -50%);
+    z-index: 1000;
+
     background: ${(props) => props.theme.white};
-    border: 1px solid ${(props) => props.theme.white};
     margin-bottom: 1.5rem;
+    border-radius: 0.5rem;
+    padding: 5rem;
+
+    overflow: hidden;
+  }
+  
+  .modal {
+    display: inline-flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    transition: transform 0.3s;
+  }
+  
+  .modal-page {
+    min-width: 100%;
+    width: 100%;    
+  }
+  
+  #create-auction-page {
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
+  }
   
-    position: fixed;
-    padding: 5rem;
-    border: 1px solid black;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 1000;
-    border-radius: 0.5rem;
+  #summary-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
   }
 
   .fill-page {
@@ -43,7 +68,7 @@ export const PostWrapper = styled.div`
 
   span {
     font-size: xx-large;
-    fontWeight: bold;
+    font-weight: bold;
   }
 
   ul {
@@ -67,13 +92,11 @@ export const PostWrapper = styled.div`
     margin: 1rem;
   }
   
-  h1 {
+  #create-auction-page > h1 {
     margin-left: 2rem;
     width: 80%;
   }
   
-   
-
   textarea {
     margin-top: 1rem;
     height: 40px;
@@ -100,29 +123,55 @@ export const PostWrapper = styled.div`
   }
 `;
 
-// CreatePost is a MODAL!!
+// Carousel component
+export const Carousel = ({ children, activeModalPage }) => {
+
+  return (
+    <div className="carousel">
+      <div 
+        className="modal"
+        style={{ transform: `translateX(-${activeModalPage * 100}%`}}
+      >
+        {/* {React.Children.map(children, (child, index) => {
+          return React.cloneElement(child, {width: "100%"})
+        })} */}
+        {children}
+      </div>
+    </div>
+  )
+}
+
+// CreatePost is a modal which is itself a carousel
 const CreatePost = ({ open, onClose, post }) => {
 
     const history = useHistory();
+
     const [postImage, setPostImage] = useState("");
+    const [activeModalPage, setActiveModalPage] = useState(0); // current page number on modal carousel
+
     const { feed, setFeed } = useContext(FeedContext);
+
+    // stores inputs
     const caption = useInput("");
-    const address = useInput("")
+    const address = useInput();
     const amount = useInput();
     const duration = useInput();
-    const interest = useInput();
-    
+    const interest = useInput();    
 
     // if modal is not open, return null
     if (!open) return null;
 
     // TODO: implement minting function
     const handleSubmitPost = () => {
-        if (!caption.value) {
+        // all fields must be filled
+        if (!(address.value && amount.value && duration.value && interest.value)) {
             return toast.error("Please write something");
         }
 
-        const tags = caption.value
+        toast.success("Your post has been submitted successfully");
+
+        // OLD CODE -- commented out b/c the pseudo API call might be useful later
+        /*const tags = caption.value
             .split(" ")
             .filter((caption) => caption.startsWith("#"));
 
@@ -147,66 +196,110 @@ const CreatePost = ({ open, onClose, post }) => {
             setFeed([post, ...feed]);
             window.scrollTo(0, 0);
             toast.success("Your post has been submitted successfully");
-        });
+        });*/
     };
 
+    // handle carousel sliding
+    const onContinue = () => {
+      setActiveModalPage(activeModalPage + 1)
+    }
+
+    const onBack = () => {
+      setActiveModalPage(activeModalPage - 1)
+    }
+
     return (
-      <>
-        <PostWrapper>
-          <div className="fill-page"></div>
-          <div className="modal">
-              <div className="header">                
-                <div><span>CREATE AUCTION</span></div>
-              </div>
-              <h1>
-                  <span className="caption bold">
-                      <textarea
-                          placeholder="Address"
-                          value={address.value}
-                          onChange={address.onChange}
-                      />
-                  </span>
-                  <span className="caption ">
-                      <textarea
-                          placeholder="Amount"
-                          value={amount.value}
-                          onChange={amount.onChange}
-                      />
-                  </span>
-                  <span className="caption ">
-                      <textarea
-                          placeholder="Duration"
-                          value={duration.value}
-                          onChange={duration.onChange}
-                      />
-                  </span>
-                  <span className="caption ">
-                      <textarea
-                          placeholder="Interest"
-                          value={interest.value}
-                          onChange={interest.onChange}
-                      />
-                  </span>
-              </h1>
-              <ul>
-                  <li>
-                      <Button
-                          onClick={onClose}
-                          className="button"
-                      >
-                         &#x2715; Cancel
-                      </Button>
-                      <Button
-                          onClick={() => toast.success("function not added")}
-                          className="button"
-                      >
-                          Continue &#x2192;
-                      </Button>
-                  </li>
-              </ul>
+      <CreatePostWrapper>
+        {/* Blur rest of screen */}
+        <div className="fill-page"></div>
+
+        <Carousel activeModalPage={activeModalPage}>
+
+          {/* Create Auction Page (Page 1) */}
+          <div className="modal-page" id="create-auction-page">
+            <div className="header">                
+              <div><span>CREATE AUCTION</span></div>
             </div>
-        </PostWrapper>
-      </>
+            <h1>
+              <span className="caption">
+                  <textarea
+                      placeholder="Address"
+                      value={address.value}
+                      onChange={address.onChange}
+                  />
+              </span>
+              <span className="caption">
+                  <textarea
+                      placeholder="Amount"
+                      value={amount.value}
+                      onChange={amount.onChange}
+                  />
+              </span>
+              <span className="caption">
+                  <textarea
+                      placeholder="Duration"
+                      value={duration.value}
+                      onChange={duration.onChange}
+                  />
+              </span>
+              <span className="caption">
+                  <textarea
+                      placeholder="Interest"
+                      value={interest.value}
+                      onChange={interest.onChange}
+                  />
+              </span>
+            </h1>
+
+            <ul>
+                <li>
+                    <Button
+                        onClick={onClose}
+                        className="button"
+                    >
+                        &#x2715; Cancel
+                    </Button>
+                    <Button
+                        onClick={onContinue}
+                        className="button"
+                    >
+                        Continue &#x2192;
+                    </Button>
+                </li>
+            </ul>
+          </div>
+
+          {/* Summary Page (Page 2) */}
+          <div className="modal-page" id="summary-page">
+
+            {/* TODO: FINISH PAGE (Can create component elsewhere and import here) */}
+            <h1>REVIEW</h1>
+            <h3>Make sure you have filled in all fields accurately</h3>
+            <p>Address: {address.value ? address.value : "EMPTY"}</p>
+            <p>Amount: {amount.value ? amount.value : "EMPTY"}</p>
+            <p>Duration: {duration.value ? duration.value : "EMPTY"}</p>
+            <p>Interest: {interest.value ? interest.value : "EMPTY"}</p>
+
+            <ul>
+                <li>
+                    <Button
+                        onClick={onBack}
+                        className="button"
+                    >
+                        &#x2190; Edit
+                    </Button>
+                    <Button
+                        onClick={handleSubmitPost}
+                        className="button"
+                    >
+                        Create Auction
+                    </Button>
+                </li>
+            </ul>
+          </div>         
+
+        </Carousel>
+      </CreatePostWrapper>
     );
 };
 
